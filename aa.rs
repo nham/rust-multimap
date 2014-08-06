@@ -39,10 +39,26 @@ fn skew<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
     }
 }
 
+ 
+// Remove dual horizontal link by rotating left and increasing level of
+// the parent
+/*
+    a            b
+     \          / \
+      b    =>  a   c
+     / \        \
+    d   c        d
+
+  provided that a.level == c.level
+*/
 fn split<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
     if node.right.as_ref().map_or(false,
-        |x| x.right.is_some() && x.right.get_ref().level == node.level) {
-        // TODO
+      |x| x.right.is_some() && x.right.get_ref().level == node.level) {
+        let mut save = node.right.take_unwrap();
+        swap(&mut node.right, &mut save.left); // save.left now None
+        save.level += 1;
+        swap(node, &mut save);
+        node.left = Some(save);
     }
 }
 
