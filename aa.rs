@@ -63,7 +63,7 @@ fn split<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
 }
 
 impl<K: Ord, V> AATree<K, V> {
-    // standard binary search tree lookup
+    // standard binary search tree lookup, only iterative instead of recursive
     fn find<'a>(&'a self, key: &K) -> Option<&'a V> {
         let mut current: &Link<AANode<K, V>> = &self.root;
         loop {
@@ -80,6 +80,7 @@ impl<K: Ord, V> AATree<K, V> {
         }
     }
 
+    // returns `Some(v)` iff `v` was already associated with `key`
     fn insert<K: Ord, V>(&mut self, key: K, value: V) -> Option<V> {
         match self.root {
             None => {
@@ -89,15 +90,44 @@ impl<K: Ord, V> AATree<K, V> {
             Some(ref mut node) => {
                 match key.cmp(&node.key) {
                     Less => {
-                        let inserted = ins
+                        let inserted = node.left.insert(key, value);
+                        skew(node);
+                        split(node);
+                        inserted
                     },
                     Greater => {
+                        let inserted = node.right.insert(key, value);
+                        skew(node);
+                        split(node);
+                        inserted
                     },
                     Equal => {
+                        node.key = key; // kinda weird, but probably correct
+                        Some(replace(&mut node.value, value))
                     },
                 }
             },
         }
+    }
+}
+
+fn print_AANode_level<K: Show, V: Show>(node: &Link<AANode<K,V>>, level: uint) {
+    let mut pre = "".to_string();
+    if level > 0 {
+        for i in range(0, level - 1) {
+            pre = pre + "   ";
+        }
+
+        pre = pre + " - ";
+    }
+
+    match *node {
+        Some(n) => {
+            println!("{}{}: {}", pre, n.key, n.value);
+            print_AANode_level(&n.left, level + 1);
+            print_AANode_level(&n.right, level + 1);
+        },
+        None => println!("{}", pre),
     }
 }
 
