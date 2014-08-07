@@ -18,7 +18,7 @@ struct Node<K, V> {
 
 impl<K: Ord, V> Node<K, V> {
     pub fn new(key: K, value: V) -> Node<K, V> {
-        Node { key: key, value: value, left: None, right: None, level: 0 }
+        Node { key: key, value: value, left: None, right: None, level: 1 }
     }
 }
  
@@ -90,50 +90,48 @@ impl<K: Ord, V> Tree<K, V> {
     fn insert(&mut self, key: K, value: V) -> Option<V> {
         let mut current = &mut self.root as *mut Link<Node<K,V>>;
         let mut path: Vec<*mut Box<Node<K,V>>> = vec!();
-        loop {
-            unsafe {
-                match *current {
-                    None => {
-                        *current = Some(box Node::new(key, value));
-                        loop { // skew/split all the way up the tree
-                            match path.pop() {
-                                None => break,
-                                Some(n) => {
-                                    let n: &mut Box<Node<K,V>> = transmute(n);
-                                    skew(n);
-                                    split(n);
-                                }
+        loop { unsafe {
+            match *current {
+                None => {
+                    *current = Some(box Node::new(key, value));
+                    loop { // skew/split all the way up the tree
+                        match path.pop() {
+                            None => break,
+                            Some(n) => {
+                                let n: &mut Box<Node<K,V>> = transmute(n);
+                                skew(n);
+                                split(n);
                             }
                         }
-                        self.size += 1;
-                        return None;
-                    },
-                    Some(ref mut n) => {
-                        match key.cmp(&n.key) {
-                            Less => {
-                                path.push(n as *mut Box<Node<K,V>>);
-                                current = &mut n.left as *mut Link<Node<K,V>>;
-                            },
-                            Greater => {
-                                path.push(n as *mut Box<Node<K,V>>);
-                                current = &mut n.right as *mut Link<Node<K,V>>;
-                            },
-                            Equal => {
-                                n.key = key;
-                                return Some(replace(&mut n.value, value));
-                            },
-                        }
-                    },
-                }
+                    }
+                    self.size += 1;
+                    return None;
+                },
+                Some(ref mut n) => {
+                    match key.cmp(&n.key) {
+                        Less => {
+                            path.push(n as *mut Box<Node<K,V>>);
+                            current = &mut n.left as *mut Link<Node<K,V>>;
+                        },
+                        Greater => {
+                            path.push(n as *mut Box<Node<K,V>>);
+                            current = &mut n.right as *mut Link<Node<K,V>>;
+                        },
+                        Equal => {
+                            n.key = key;
+                            return Some(replace(&mut n.value, value));
+                        },
+                    }
+                },
             }
-        }
+        }}
     }
 }
 
-fn print_node_level<K: Show, V: Show>(node: &Link<Node<K,V>>, level: uint) {
+fn print_node_depth<K: Show, V: Show>(node: &Link<Node<K,V>>, depth: uint) {
     let mut pre = "".to_string();
-    if level > 0 {
-        for i in range(0, level - 1) {
+    if depth > 0 {
+        for i in range(0, depth - 1) {
             pre = pre + "   ";
         }
 
@@ -143,23 +141,31 @@ fn print_node_level<K: Show, V: Show>(node: &Link<Node<K,V>>, level: uint) {
     match *node {
         Some(ref n) => {
             println!("{}{}: {}", pre, n.key, n.value);
-            print_node_level(&n.left, level + 1);
-            print_node_level(&n.right, level + 1);
+            print_node_depth(&n.left, depth + 1);
+            print_node_depth(&n.right, depth + 1);
         },
         None => println!("{}", pre),
     }
 }
 
 fn print_tree<K: Show, V: Show>(tree: &Tree<K, V>) {
-    print_node_level(&tree.root, 0)
+    print_node_depth(&tree.root, 0);
+    println!("------------");
 }
 
 fn main() {
     let mut t = Tree::new();
-    t.insert('c', 5u);
+    t.insert('e', 5u);
 
     println!("{} {}", t.find(&'b'), t.find(&'c'));
 
     println!("printing things:\n------------------");
+
+    print_tree(&t);
+
+    t.insert('b', 88u);
+    print_tree(&t);
+
+    t.insert('d', 11u);
     print_tree(&t);
 }
