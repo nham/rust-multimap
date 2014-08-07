@@ -1,4 +1,4 @@
-use std::mem::{replace, swap};
+use std::mem::{replace, swap, transmute};
 use std::fmt::Show;
 
 type Link<T> = Option<Box<T>>;
@@ -65,6 +65,10 @@ fn split<K: Ord, V>(node: &mut Box<Node<K, V>>) {
 }
 
 impl<K: Ord, V> Tree<K, V> {
+    fn new() -> Tree<K, V> {
+        Tree { root: None, size: 0 }
+    }
+
     // standard binary search tree lookup, only iterative instead of recursive
     fn find<'a>(&'a self, key: &K) -> Option<&'a V> {
         let mut current: &Link<Node<K, V>> = &self.root;
@@ -84,39 +88,45 @@ impl<K: Ord, V> Tree<K, V> {
 
     // returns `Some(v)` iff `v` was already associated with `key`
     fn insert(&mut self, key: K, value: V) -> Option<V> {
-        let mut current = &mut self.root;
-        let mut path: Vec<&mut Box<Node<K,V>>> = vec!();
+        let mut current = &mut self.root as *mut Link<Node<K,V>>;
+        let mut path: Vec<*mut Box<Node<K,V>>> = vec!();
         loop {
-            match *current {
-                None => {
-                    *current = Some(box Node::new(key, value));
-                    loop { // skew/split all the way up the tree
-                        match path.pop() {
-                            None => break,
-                            Some(n) => { skew(n); split(n); }
+            unsafe {
+                match *current {
+                    None => {
+                        *current = Some(box Node::new(key, value));
+                        loop { // skew/split all the way up the tree
+                            match path.pop() {
+                                None => break,
+                                Some(n) => {
+                                    let n: &mut Box<Node<K,V>> = transmute(n);
+                                    skew(n);
+                                    split(n);
+                                }
+                            }
                         }
-                    }
-                    return None;
-                },
-                Some(ref mut n) => {
-                    match key.cmp(&n.key) {
-                        Less => {
-                            path.push(n);
-                            current = &mut n.left;
-                        },
-                        Greater => {
-                            path.push(n);
-                            current = &mut n.right;
-                        },
-                        Equal => {
-                            n.key = key;
-                            return Some(replace(&mut n.value, value));
-                        },
-                    }
-                },
+                        self.size += 1;
+                        return None;
+                    },
+                    Some(ref mut n) => {
+                        match key.cmp(&n.key) {
+                            Less => {
+                                path.push(n as *mut Box<Node<K,V>>);
+                                current = &mut n.left as *mut Link<Node<K,V>>;
+                            },
+                            Greater => {
+                                path.push(n as *mut Box<Node<K,V>>);
+                                current = &mut n.right as *mut Link<Node<K,V>>;
+                            },
+                            Equal => {
+                                n.key = key;
+                                return Some(replace(&mut n.value, value));
+                            },
+                        }
+                    },
+                }
             }
         }
-        None
     }
 }
 
