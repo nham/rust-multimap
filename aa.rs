@@ -150,5 +150,16 @@ fn print_node_level<K: Show, V: Show>(node: &Link<Node<K,V>>, level: uint) {
     }
 }
 
+fn print_tree<K: Show, V: Show>(tree: &Tree<K, V>) {
+    print_node_level(&tree.root, 0)
+}
+
 fn main() {
+    let mut t = Tree::new();
+    t.insert('c', 5u);
+
+    println!("{} {}", t.find(&'b'), t.find(&'c'));
+
+    println!("printing things:\n------------------");
+    print_tree(&t);
 }
