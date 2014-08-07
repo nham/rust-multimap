@@ -1,3 +1,6 @@
+use std::mem::{replace, swap};
+use std::fmt::Show;
+
 // First shot at an AA tree. Mostly copied from libcollections/treemap.rs
 type Link<T> = Option<Box<T>>;
 
