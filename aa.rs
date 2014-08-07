@@ -84,33 +84,40 @@ impl<K: Ord, V> AATree<K, V> {
     }
 
     // returns `Some(v)` iff `v` was already associated with `key`
-    fn insert<K: Ord, V>(&mut self, key: K, value: V) -> Option<V> {
-        match self.root {
-            None => {
-                self.root = Some(box AANode::new(key, value));
-                None
-            },
-            Some(ref mut node) => {
-                match key.cmp(&node.key) {
-                    Less => {
-                        let inserted = node.left.insert(key, value);
-                        skew(node);
-                        split(node);
-                        inserted
-                    },
-                    Greater => {
-                        let inserted = node.right.insert(key, value);
-                        skew(node);
-                        split(node);
-                        inserted
-                    },
-                    Equal => {
-                        node.key = key; // kinda weird, but probably correct
-                        Some(replace(&mut node.value, value))
-                    },
-                }
-            },
+    fn insert(&mut self, key: K, value: V) -> Option<V> {
+        let mut current = &mut self.root;
+        let mut path: Vec<&mut Box<AANode<K,V>>> = vec!();
+        loop {
+            match *current {
+                None => {
+                    *current = Some(box AANode::new(key, value));
+                    loop { // skew/split all the way up the tree
+                        match path.pop() {
+                            None => break,
+                            Some(n) => { skew(n); split(n); }
+                        }
+                    }
+                    return None;
+                },
+                Some(ref mut n) => {
+                    match key.cmp(&n.key) {
+                        Less => {
+                            path.push(n);
+                            current = &mut n.left;
+                        },
+                        Greater => {
+                            path.push(n);
+                            current = &mut n.right;
+                        },
+                        Equal => {
+                            n.key = key;
+                            return Some(replace(&mut n.value, value));
+                        },
+                    }
+                },
+            }
         }
+        None
     }
 }
 
@@ -125,7 +132,7 @@ fn print_AANode_level<K: Show, V: Show>(node: &Link<AANode<K,V>>, level: uint) {
     }
 
     match *node {
-        Some(n) => {
+        Some(ref n) => {
             println!("{}{}: {}", pre, n.key, n.value);
             print_AANode_level(&n.left, level + 1);
             print_AANode_level(&n.right, level + 1);
