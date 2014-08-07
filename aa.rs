@@ -1,25 +1,24 @@
 use std::mem::{replace, swap};
 use std::fmt::Show;
 
-// First shot at an AA tree. Mostly copied from libcollections/treemap.rs
 type Link<T> = Option<Box<T>>;
 
-pub struct AATree<K, V> {
-    root: Link<AANode<K, V>>,
-    length: uint
+pub struct Tree<K, V> {
+    root: Link<Node<K, V>>,
+    size: uint
 }
 
-struct AANode<K, V> {
+struct Node<K, V> {
     key: K,
     value: V,
-    left: Link<AANode<K, V>>,
-    right: Link<AANode<K, V>>,
+    left: Link<Node<K, V>>,
+    right: Link<Node<K, V>>,
     level: uint
 }
 
-impl<K: Ord, V> AANode<K, V> {
-    pub fn new(key: K, value: V) -> AANode<K, V> {
-        AANode { key: key, value: value, left: None, right: None, level: 1 }
+impl<K: Ord, V> Node<K, V> {
+    pub fn new(key: K, value: V) -> Node<K, V> {
+        Node { key: key, value: value, left: None, right: None, level: 0 }
     }
 }
  
@@ -33,7 +32,7 @@ impl<K: Ord, V> AANode<K, V> {
 
   provided that a.level == b.level
 */
-fn skew<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
+fn skew<K: Ord, V>(node: &mut Box<Node<K, V>>) {
     if node.left.is_some() && node.left.get_ref().level == node.level {
         let mut save = node.left.take_unwrap();
         swap(&mut node.left, &mut save.right); // save.right now None
@@ -54,7 +53,7 @@ fn skew<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
 
   provided that a.level == c.level
 */
-fn split<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
+fn split<K: Ord, V>(node: &mut Box<Node<K, V>>) {
     if node.right.as_ref().map_or(false,
       |x| x.right.is_some() && x.right.get_ref().level == node.level) {
         let mut save = node.right.take_unwrap();
@@ -65,10 +64,10 @@ fn split<K: Ord, V>(node: &mut Box<AANode<K, V>>) {
     }
 }
 
-impl<K: Ord, V> AATree<K, V> {
+impl<K: Ord, V> Tree<K, V> {
     // standard binary search tree lookup, only iterative instead of recursive
     fn find<'a>(&'a self, key: &K) -> Option<&'a V> {
-        let mut current: &Link<AANode<K, V>> = &self.root;
+        let mut current: &Link<Node<K, V>> = &self.root;
         loop {
             match *current {
                 Some(ref r) => {
@@ -86,11 +85,11 @@ impl<K: Ord, V> AATree<K, V> {
     // returns `Some(v)` iff `v` was already associated with `key`
     fn insert(&mut self, key: K, value: V) -> Option<V> {
         let mut current = &mut self.root;
-        let mut path: Vec<&mut Box<AANode<K,V>>> = vec!();
+        let mut path: Vec<&mut Box<Node<K,V>>> = vec!();
         loop {
             match *current {
                 None => {
-                    *current = Some(box AANode::new(key, value));
+                    *current = Some(box Node::new(key, value));
                     loop { // skew/split all the way up the tree
                         match path.pop() {
                             None => break,
@@ -121,7 +120,7 @@ impl<K: Ord, V> AATree<K, V> {
     }
 }
 
-fn print_AANode_level<K: Show, V: Show>(node: &Link<AANode<K,V>>, level: uint) {
+fn print_node_level<K: Show, V: Show>(node: &Link<Node<K,V>>, level: uint) {
     let mut pre = "".to_string();
     if level > 0 {
         for i in range(0, level - 1) {
@@ -134,8 +133,8 @@ fn print_AANode_level<K: Show, V: Show>(node: &Link<AANode<K,V>>, level: uint) {
     match *node {
         Some(ref n) => {
             println!("{}{}: {}", pre, n.key, n.value);
-            print_AANode_level(&n.left, level + 1);
-            print_AANode_level(&n.right, level + 1);
+            print_node_level(&n.left, level + 1);
+            print_node_level(&n.right, level + 1);
         },
         None => println!("{}", pre),
     }
