@@ -263,6 +263,30 @@ mod test {
     use std::rand;
     use std::rand::distributions::{IndependentSample, Range};
 
+    #[test]
+    fn test_find() {
+        let mut t = Tree::new();
+        assert_eq!(t.find(&1u), None);
+        t.insert(1u, 'j');
+        assert_eq!(t.find(&1u), Some(&'j'));
+
+    }
+
+    // testing whether we can find all the things we inserted
+    #[test]
+    fn test_insert() {
+        let mut t: Tree<uint, u8> = Tree::new();
+        for (i, c) in range(0u, 10).zip(range(b'a', b'z')) {
+            t.insert(i, c);
+        }
+
+        for (ref i, ref c) in range(0u, 10).zip(range(b'a', b'z')) {
+            assert_eq!(t.find(i), Some(c));
+        }
+
+        assert_eq!(t.find(&10u), None);
+    }
+
     fn insert_n_check_aa(n: uint, between: Range<uint>, rng: &mut rand::TaskRng) {
         let mut t = Tree::new();
 
@@ -275,8 +299,9 @@ mod test {
         assert!(t.is_aa());
     }
 
+    // testing whether, after inserting 20 random keys, is_aa() returns true
     #[test]
-    fn test_insert() {
+    fn test_insert_is_aa() {
         let mut rng = rand::task_rng();
         let between = Range::new(0u, 100_000);
 
@@ -285,8 +310,10 @@ mod test {
         }
     }
 
+    // testing whether, after inserting 20 random keys, is_aa() returns true,
+    // but this time some of the keys are repeated
     #[test]
-    fn test_insert_dups() {
+    fn test_insert_dups_is_aa() {
         let mut rng = rand::task_rng();
         let between = Range::new(0u, 15);
 
