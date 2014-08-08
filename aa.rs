@@ -20,6 +20,34 @@ impl<K: Ord, V> Node<K, V> {
     pub fn new(key: K, value: V) -> Node<K, V> {
         Node { key: key, value: value, left: None, right: None, level: 1 }
     }
+
+    fn max(&self) -> &K {
+        match self.right {
+            None => &self.key,
+            Some(ref n) => n.right.get_ref().max(),
+        }
+    }
+
+    fn min(&self) -> &K {
+        match self.left {
+            None => &self.key,
+            Some(ref n) => n.left.get_ref().min(),
+        }
+    }
+
+    fn is_bst(&self) -> bool {
+        let check_left = match self.left {
+            None => true,
+            Some(ref n) => (*n).is_bst() && *(*n).max() < self.key,
+        };
+
+        if check_left {
+            match self.right {
+                None => true,
+                Some(ref n) => (*n).is_bst() && *(*n).min() > self.key,
+            }
+        } else { false }
+    }
 }
  
 // Remove left horizontal link by rotating right
@@ -67,6 +95,13 @@ fn split<K: Ord, V>(node: &mut Box<Node<K, V>>) {
 impl<K: Ord, V> Tree<K, V> {
     fn new() -> Tree<K, V> {
         Tree { root: None, size: 0 }
+    }
+
+    fn is_bst(&self) -> bool {
+        match self.root {
+            None => true,
+            Some(ref r) => (*r).is_bst()
+        }
     }
 
     // standard binary search tree lookup, only iterative instead of recursive
@@ -168,4 +203,6 @@ fn main() {
 
     t.insert('d', 11u);
     print_tree(&t);
+
+    println!("{}", t.is_bst());
 }
