@@ -24,14 +24,14 @@ impl<K: Ord, V> Node<K, V> {
     fn max(&self) -> &K {
         match self.right {
             None => &self.key,
-            Some(ref n) => n.right.get_ref().max(),
+            Some(ref n) => n.max(),
         }
     }
 
     fn min(&self) -> &K {
         match self.left {
             None => &self.key,
-            Some(ref n) => n.left.get_ref().min(),
+            Some(ref n) => n.min(),
         }
     }
 
@@ -248,5 +248,50 @@ fn main() {
     t.insert('d', 11u);
     print_tree(&t);
 
-    println!("{}", t.is_bst());
+    let mut t = Tree::new();
+    t.insert(7u, ());
+    t.insert(8u, ());
+    t.insert(9u, ());
+    t.insert(6u, ());
+    assert!(t.is_aa());
+
+}
+
+
+mod test {
+    use super::Tree;
+    use std::rand;
+    use std::rand::distributions::{IndependentSample, Range};
+
+    fn insert_n_check_aa(n: uint, between: Range<uint>, rng: &mut rand::TaskRng) {
+        let mut t = Tree::new();
+
+        for _ in range(0u, n) {
+            let a = between.ind_sample(rng);
+            println!("{}", a);
+            t.insert(a, ());
+        }
+
+        assert!(t.is_aa());
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut rng = rand::task_rng();
+        let between = Range::new(0u, 100_000);
+
+        for _ in range(0u, 300) {
+            insert_n_check_aa(20, between, &mut rng);
+        }
+    }
+
+    #[test]
+    fn test_insert_dups() {
+        let mut rng = rand::task_rng();
+        let between = Range::new(0u, 15);
+
+        for _ in range(0u, 300) {
+            insert_n_check_aa(20, between, &mut rng);
+        }
+    }
 }
