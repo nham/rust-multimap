@@ -48,6 +48,45 @@ impl<K: Ord, V> Node<K, V> {
             }
         } else { false }
     }
+
+    // To be an AA tree, it must be a binary search tree and, for all nodes n:
+    //   - the left child must have a level one less than n's leve
+    //   - the right child must have a level equal to or one less than n's level
+    //   - the right child's right child must not have the same level as n's level
+    fn is_aa(&self) -> bool {
+        if !self.is_bst() {
+            return false
+        }
+
+        let lvl = self.level;
+
+        match self.left {
+            None => {},
+            Some(ref n) => {
+                if !n.is_aa() { return false }
+
+                if n.level + 1 != lvl { return false }
+            }
+        }
+
+        match self.right {
+            None => {},
+            Some(ref n) =>  {
+                if !n.is_aa() { return false }
+
+                if n.level != lvl && n.level + 1 != lvl { return false }
+
+                if n.level == lvl {
+                    match n.right {
+                        None => {},
+                        Some(ref c) => if c.level == n.level { return false }
+                    }
+                }
+            }
+        }
+
+        true
+    }
 }
  
 // Remove left horizontal link by rotating right
@@ -101,6 +140,13 @@ impl<K: Ord, V> Tree<K, V> {
         match self.root {
             None => true,
             Some(ref r) => (*r).is_bst()
+        }
+    }
+
+    fn is_aa(&self) -> bool {
+        match self.root {
+            None => true,
+            Some(ref r) => (*r).is_aa()
         }
     }
 
@@ -183,19 +229,17 @@ fn print_node_depth<K: Show, V: Show>(node: &Link<Node<K,V>>, depth: uint) {
     }
 }
 
-fn print_tree<K: Show, V: Show>(tree: &Tree<K, V>) {
+fn print_tree<K: Show + Ord, V: Show>(tree: &Tree<K, V>) {
     print_node_depth(&tree.root, 0);
+    println!("Is AA: {}", tree.is_aa());
     println!("------------");
 }
 
 fn main() {
     let mut t = Tree::new();
+    print_tree(&t);
+
     t.insert('e', 5u);
-
-    println!("{} {}", t.find(&'b'), t.find(&'c'));
-
-    println!("printing things:\n------------------");
-
     print_tree(&t);
 
     t.insert('b', 88u);
