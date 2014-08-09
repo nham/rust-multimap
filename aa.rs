@@ -1,5 +1,7 @@
 use std::mem::{replace, swap, transmute};
 use std::fmt::Show;
+use std::rand;
+use std::rand::distributions::{IndependentSample, Range};
 
 type Link<T> = Option<Box<T>>;
 
@@ -252,6 +254,19 @@ fn main() {
     t.insert(9u, ());
     t.insert(6u, ());
     assert!(t.is_aa());
+
+    print_tree(&t);
+
+
+    let mut rng = rand::task_rng();
+    let between = Range::new(0u, 50);
+
+    let mut t = Tree::new();
+
+    for _ in range(0u, 13) {
+        let a = between.ind_sample(&mut rng);
+        t.insert(a, ());
+    }
 
     print_tree(&t);
 
