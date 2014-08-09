@@ -221,7 +221,7 @@ fn print_node_depth<K: Show, V: Show>(node: &Link<Node<K,V>>, depth: uint) {
 
     match *node {
         Some(ref n) => {
-            println!("{}{}:{}", pre, n.key, n.value);
+            println!("{}{}:{}*{}", pre, n.key, n.value, n.level);
             print_node_depth(&n.left, depth + 1);
             print_node_depth(&n.right, depth + 1);
         },
