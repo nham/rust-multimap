@@ -212,20 +212,18 @@ impl<K: Ord, V> Tree<K, V> {
 fn print_node_depth<K: Show, V: Show>(node: &Link<Node<K,V>>, depth: uint) {
     let mut pre = "".to_string();
     if depth > 0 {
-        for i in range(0, depth - 1) {
+        for i in range(0, depth) {
             pre = pre + "   ";
         }
-
-        pre = pre + " - ";
     }
 
     match *node {
         Some(ref n) => {
-            println!("{}{}: {}", pre, n.key, n.value);
+            println!("{}{}:{}", pre, n.key, n.value);
             print_node_depth(&n.left, depth + 1);
             print_node_depth(&n.right, depth + 1);
         },
-        None => println!("{}", pre),
+        None => println!("{}-", pre),
     }
 }
 
@@ -254,6 +252,8 @@ fn main() {
     t.insert(9u, ());
     t.insert(6u, ());
     assert!(t.is_aa());
+
+    print_tree(&t);
 
 }
 
