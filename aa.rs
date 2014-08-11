@@ -38,56 +38,37 @@ impl<K: Ord, V> Node<K, V> {
     }
 
     fn is_bst(&self) -> bool {
-        let check_left = match self.left {
-            None => true,
-            Some(ref n) => (*n).is_bst() && *(*n).max() < self.key,
-        };
-
-        if check_left {
-            match self.right {
-                None => true,
-                Some(ref n) => (*n).is_bst() && *(*n).min() > self.key,
-            }
-        } else { false }
+        self.left.as_ref().map_or(true, |n| n.is_bst() && *n.max() < self.key)
+        && self.right.as_ref().map_or(true, |n| n.is_bst() && *n.min() > self.key)
     }
 
     // To be an AA tree, it must be a binary search tree and, for all nodes n:
-    //   - the left child must have a level one less than n's leve
+    //   - the left child must have a level one less than n's level
     //   - the right child must have a level equal to or one less than n's level
     //   - the right child's right child must not have the same level as n's level
     fn is_aa(&self) -> bool {
-        if !self.is_bst() {
-            return false
-        }
-
         let lvl = self.level;
 
+        self.is_bst()
+            && self.left.as_ref().map_or(true, |n| n.is_aa())
+            && self.no_red_left_child()
+            && self.right.as_ref().map_or(true,
+                |n| n.is_aa() && (n.level == lvl || n.level + 1 == lvl)
+                    && !(n.level == lvl && !n.no_red_right_child()))
+    }
+
+    fn no_red_left_child(&self) -> bool {
         match self.left {
-            None => {},
-            Some(ref n) => {
-                if !n.is_aa() { return false }
-
-                if n.level + 1 != lvl { return false }
-            }
+            None => true,
+            Some(ref n) => n.level + 1 == self.level,
         }
+    }
 
+    fn no_red_right_child(&self) -> bool {
         match self.right {
-            None => {},
-            Some(ref n) =>  {
-                if !n.is_aa() { return false }
-
-                if n.level != lvl && n.level + 1 != lvl { return false }
-
-                if n.level == lvl {
-                    match n.right {
-                        None => {},
-                        Some(ref c) => if c.level == n.level { return false }
-                    }
-                }
-            }
+            None => true,
+            Some(ref n) => n.level + 1 == self.level,
         }
-
-        true
     }
 }
  
