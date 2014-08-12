@@ -240,16 +240,42 @@ fn main() {
 
 
     let mut rng = rand::task_rng();
-    let between = Range::new(0u, 50);
+    let between = Range::new(0u, 60);
 
     let mut t = Tree::new();
 
-    for _ in range(0u, 13) {
+    for _ in range(0u, 22) {
         let a = between.ind_sample(&mut rng);
         t.insert(a, ());
     }
-
     print_tree(&t);
+
+    let a = between.ind_sample(&mut rng);
+    t.insert(a, ());
+    print_tree(&t);
+
+    println!("-------------");
+    let mut x = Tree::new();
+    x.insert(3u, ());
+    print_tree(&x);
+
+    x.insert(7u, ());
+    print_tree(&x);
+
+    x.insert(1u, ());
+    print_tree(&x);
+
+    x.insert(9u, ());
+    print_tree(&x);
+
+    x.insert(5u, ());
+    print_tree(&x);
+
+    x.insert(6u, ());
+    print_tree(&x);
+
+    x.insert(4u, ());
+    print_tree(&x);
 
 }
 
