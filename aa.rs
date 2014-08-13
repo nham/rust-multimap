@@ -43,6 +43,7 @@ impl<K: Ord, V> Node<K, V> {
     }
 
     // To be an AA tree, it must be a binary search tree and, for all nodes n:
+    //   - if n is missing a child, its level must be 1
     //   - the left child must have a level one less than n's level
     //   - the right child must have a level equal to or one less than n's level
     //   - the right child's right child must not have the same level as n's level
@@ -50,6 +51,7 @@ impl<K: Ord, V> Node<K, V> {
         let lvl = self.level;
 
         self.is_bst()
+            && !(self.left.is_none() && self.right.is_none() && self.level != 1)
             && self.left.as_ref().map_or(true, |n| n.is_aa())
             && self.no_red_left_child()
             && self.right.as_ref().map_or(true,
